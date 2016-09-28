@@ -39,6 +39,20 @@ abstract class MyFirstCombinator {
     }
   }
 
+  def combine[T, U](left: Parser[T], right: Parser[U]) : Parser[(T, U)] = input => {
+    left(input) match {
+      case Success(value1, next1) =>
+        right(next1) match {
+          case Success(value2, next2) =>
+            Success((value1, value2), next2)
+          case Failure =>
+            Failure
+        }
+      case Failure =>
+        Failure
+    }
+  }
+
   def map[T, U](parser: Parser[T], function: T => U): Parser[U] = input => {
     parser(input) match {
       case Success(value, next) => Success(function(value), next)
