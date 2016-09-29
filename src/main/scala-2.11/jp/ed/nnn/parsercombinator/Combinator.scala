@@ -71,6 +71,24 @@ abstract class Combinator {
     }
   }
 
+  def oneOf(chars: Seq[Char]): Parser[String] = input => {
+    if(input.length != 0 &&
+      chars.contains(input.head)) {
+      Success(input.head.toString, input.tail)
+    } else {
+      Failure
+    }
+  }
+
+  def spacing: Parser[String] = rep(oneOf(Seq(' ', '\t', '\r', '\n'))) ^^ { _.mkString}
+
+  /**
+    * String parser with spacing
+    * @param str parse target string
+    * @return
+    */
+  def ss(str: String): Parser[String] = s(str) <~ spacing
+
   implicit class RichParser[T](val parser: Parser[T]) {
 
     /**
