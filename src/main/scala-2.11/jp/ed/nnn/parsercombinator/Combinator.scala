@@ -31,10 +31,30 @@ abstract class Combinator {
       * @param right 選択を行うパーサー
       * @return
       */
-    def |[U >: T](right: => Parser[U]): Parser[U] = input => {
+    def |[U >: T](right: Parser[U]): Parser[U] = input => {
       parser(input) match {
         case success@Success(_, _) => success
         case Failure => right(input)
+      }
+    }
+
+    /**
+      * combine
+      * @param right 逐次合成を行うパーサー
+      * @tparam U
+      * @return
+      */
+    def ~[U](right: Parser[U]) : Parser[(T, U)] = input => {
+      parser(input) match {
+        case Success(value1, next1) =>
+          right(next1) match {
+            case Success(value2, next2) =>
+              Success((value1, value2), next2)
+            case Failure =>
+              Failure
+          }
+        case Failure =>
+          Failure
       }
     }
 
