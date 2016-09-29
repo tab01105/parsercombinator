@@ -23,7 +23,7 @@ abstract class Combinator {
     */
   def s(literal: String): Parser[String] = string(literal)
 
-  def rep[T](parser: Parser[T]): Parser[List[T]] = input => {
+  def rep[T](parser: => Parser[T]): Parser[List[T]] = input => {
 
     def repeatRec(input: String): (List[T], String) = parser(input) match {
       case Success(value, next1) =>
@@ -37,16 +37,16 @@ abstract class Combinator {
     Success(result, next)
   }
 
-  def rep1sep[T](parser: Parser[T], sep: Parser[String]): Parser[List[T]] =
+  def rep1sep[T](parser: => Parser[T], sep: Parser[String]): Parser[List[T]] =
     parser ~ rep(sep ~> parser) ^^ { t => t._1 :: t._2 }
 
   def success[T](value: T): Parser[T] = input => Success(value, input)
 
-  def repsep[T](parser: Parser[T], sep: Parser[String]): Parser[List[T]] =
+  def repsep[T](parser: => Parser[T], sep: Parser[String]): Parser[List[T]] =
     rep1sep(parser, sep) | success(List())
 
   val floatingPointNumber: Parser[String] = input => {
-    val r = """^-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
+    val r = """^(-?\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
     val matchIterator = r.findAllIn(input).matchData
     if(matchIterator.hasNext) {
       val next = matchIterator.next()
@@ -79,7 +79,7 @@ abstract class Combinator {
       * @param right 選択を行うパーサー
       * @return
       */
-    def |[U >: T](right: Parser[U]): Parser[U] = input => {
+    def |[U >: T](right: => Parser[U]): Parser[U] = input => {
       parser(input) match {
         case success@Success(_, _) => success
         case Failure => right(input)
@@ -92,7 +92,7 @@ abstract class Combinator {
       * @tparam U パーサーの結果の型
       * @return
       */
-    def ~[U](right: Parser[U]) : Parser[(T, U)] = input => {
+    def ~[U](right: => Parser[U]) : Parser[(T, U)] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
@@ -111,7 +111,7 @@ abstract class Combinator {
       * @param right 右側のパーサー
       * @return
       */
-    def <~(right: Parser[Any]) : Parser[T] = input => {
+    def <~(right: => Parser[Any]) : Parser[T] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
@@ -131,7 +131,7 @@ abstract class Combinator {
       * @tparam U パーサーの結果の型
       * @return
       */
-    def ~>[U](right: Parser[U]) : Parser[U] = input => {
+    def ~>[U](right: => Parser[U]) : Parser[U] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
