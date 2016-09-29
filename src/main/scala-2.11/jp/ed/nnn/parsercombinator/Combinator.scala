@@ -23,4 +23,21 @@ abstract class Combinator {
     */
   def s(literal: String): Parser[String] = string(literal)
 
+  implicit class RichParser[T](val parser: Parser[T]) {
+
+    /**
+      * select
+      *
+      * @param right 選択を行うパーサー
+      * @return
+      */
+    def |[U >: T](right: => Parser[U]): Parser[U] = input => {
+      parser(input) match {
+        case success@Success(_, _) => success
+        case Failure => right(input)
+      }
+    }
+
+  }
+
 }
