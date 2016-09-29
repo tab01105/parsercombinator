@@ -37,6 +37,14 @@ abstract class Combinator {
     Success(result, next)
   }
 
+  def rep1sep[T](parser: Parser[T], sep: Parser[String]): Parser[List[T]] =
+    parser ~ rep(sep ~> parser) ^^ { t => t._1 :: t._2 }
+
+  def success[T](value: T): Parser[T] = input => Success(value, input)
+
+  def repsep[T](parser: Parser[T], sep: Parser[String]): Parser[List[T]] =
+    rep1sep(parser, sep) | success(List())
+
   implicit class RichParser[T](val parser: Parser[T]) {
 
     /**
