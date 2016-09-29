@@ -41,7 +41,7 @@ abstract class Combinator {
     /**
       * combine
       * @param right 逐次合成を行うパーサー
-      * @tparam U
+      * @tparam U パーサーの結果の型
       * @return
       */
     def ~[U](right: Parser[U]) : Parser[(T, U)] = input => {
@@ -59,9 +59,48 @@ abstract class Combinator {
     }
 
     /**
+      * use left
+      * @param right 右側のパーサー
+      * @return
+      */
+    def <~(right: Parser[Any]) : Parser[T] = input => {
+      parser(input) match {
+        case Success(value1, next1) =>
+          right(next1) match {
+            case Success(value2, next2) =>
+              Success(value1, next2)
+            case Failure =>
+              Failure
+          }
+        case Failure =>
+          Failure
+      }
+    }
+
+    /**
+      * use right
+      * @param right 右側のパーサー
+      * @tparam U パーサーの結果の型
+      * @return
+      */
+    def ~>[U](right: Parser[U]) : Parser[U] = input => {
+      parser(input) match {
+        case Success(value1, next1) =>
+          right(next1) match {
+            case Success(value2, next2) =>
+              Success(value2, next2)
+            case Failure =>
+              Failure
+          }
+        case Failure =>
+          Failure
+      }
+    }
+
+    /**
       * map
-      * @param function
-      * @tparam U
+      * @param function 適用する関数
+      * @tparam U パーサーの結果の型
       * @return
       */
     def ^^[U](function: T => U): Parser[U] = input => {
