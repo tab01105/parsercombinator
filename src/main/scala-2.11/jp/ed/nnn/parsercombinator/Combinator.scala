@@ -45,6 +45,32 @@ abstract class Combinator {
   def repsep[T](parser: Parser[T], sep: Parser[String]): Parser[List[T]] =
     rep1sep(parser, sep) | success(List())
 
+  val floatingPointNumber: Parser[String] = input => {
+    val r = """^-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
+    val matchIterator = r.findAllIn(input).matchData
+    if(matchIterator.hasNext) {
+      val next = matchIterator.next()
+      val all = next.group(0)
+      val target = next.group(1)
+      Success(target, input.substring(all.length))
+    } else {
+      Failure
+    }
+  }
+
+  val stringLiteral: Parser[String] = input =>  {
+    val r = ("^\"("+"""([^"\p{Cntrl}\\]|\\[\\'"bfnrt]|\\u[a-fA-F0-9]{4})*+"""+")\"").r
+    val matchIterator = r.findAllIn(input).matchData
+    if(matchIterator.hasNext) {
+      val next = matchIterator.next()
+      val all = next.group(0)
+      val target = next.group(1)
+      Success(target, input.substring(all.length))
+    } else {
+      Failure
+    }
+  }
+
   implicit class RichParser[T](val parser: Parser[T]) {
 
     /**
