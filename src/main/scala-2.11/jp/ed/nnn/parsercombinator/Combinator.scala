@@ -58,6 +58,19 @@ abstract class Combinator {
       }
     }
 
+    /**
+      * map
+      * @param function
+      * @tparam U
+      * @return
+      */
+    def ^^[U](function: T => U): Parser[U] = input => {
+      parser(input) match {
+        case Success(value, next) => Success(function(value), next)
+        case Failure => Failure
+      }
+    }
+
   }
 
 }
