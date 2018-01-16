@@ -1,11 +1,11 @@
 package jp.ed.nnn.parsercombinator
 
-import jp.ed.nnn.parsercombinator.JavaTokenParsersJSONParser.value
-
 object JSONParser extends Combinator {
 
-  def obj: Parser[Map[String, Any]]  =
-    s("{") ~> repsep(member, s(",")) <~ s("}") ^^ { Map() ++ _ }
+  def obj: Parser[Map[String, Any]] =
+    s("{") ~> repsep(member, s(",")) <~ s("}") ^^ {
+      Map() ++ _
+    }
 
   def arr: Parser[List[Any]] =
     s("[") ~> repsep(value, s(",")) <~ s("]")
@@ -17,10 +17,12 @@ object JSONParser extends Combinator {
     obj |
       arr |
       stringLiteral |
-      (floatingPointNumber ^^ { _.toDouble }) |
-      s("null") ^^  { _ => null } |
-      s("true") ^^  { _ => true } |
-      s("false") ^^  { _ => false }
+      (floatingPointNumber ^^ {
+        _.toDouble
+      }) |
+      s("null") ^^ { _ => null } |
+      s("true") ^^ { _ => true } |
+      s("false") ^^ { _ => false }
 
   def apply(input: String): Any = value(input)
 
