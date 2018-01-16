@@ -1,5 +1,7 @@
 package jp.ed.nnn.parsercombinator
 
+import jp.ed.nnn.parsercombinator.JavaTokenParsersJSONParser.value
+
 object JSONParser extends Combinator {
 
   def obj: Parser[Map[String, Any]]  =
