@@ -3,13 +3,15 @@ package jp.ed.nnn.parsercombinator
 abstract class Combinator {
 
   sealed trait ParseResult[+T]
+
   case class Success[+T](value: T, next: String) extends ParseResult[T]
+
   case object Failure extends ParseResult[Nothing]
 
   type Parser[+T] = String => ParseResult[T]
 
   def string(literal: String): Parser[String] = input => {
-    if(input.startsWith(literal)) {
+    if (input.startsWith(literal)) {
       Success(literal, input.substring(literal.length))
     } else {
       Failure
@@ -18,17 +20,47 @@ abstract class Combinator {
 
   /**
     * string parser
+    *
     * @param literal 文字列
     * @return
     */
   def s(literal: String): Parser[String] = string(literal)
+
+  //  def oneOf(chars: Seq[Char]): Parser[String] = input => {
+  //    if (input.length != 0 &&
+  //      chars.contains(input.head)) {
+  //      Success(input.head.toString, input.tail)
+  //    } else {
+  //      Failure
+  //    }
+  //  }
+  //
+  //  def spacing: Parser[String] = rep(oneOf(Seq(' ', '\t', '\r', '\n'))) ^^ {
+  //    _.mkString
+  //  }
+
+  def spacing: Parser[String] = input => {
+    val r = """^(\s*)""".r
+    val matchIterator = r.findAllIn(input).matchData
+    if (matchIterator.hasNext) {
+      val next = matchIterator.next()
+      val all = next.group(0)
+      val target = next.group(1)
+      Success(target, input.substring(all.length))
+    } else {
+      Failure
+    }
+  }
+
+//    def ss: Parser[String] = s <~ spacing
+  def ss(str: String): Parser[String] = s(str) <~ spacing
 
   def rep[T](parser: => Parser[T]): Parser[List[T]] = input => {
 
     def repeatRec(input: String): (List[T], String) = parser(input) match {
       case Success(value, next1) =>
         val (result, next2) = repeatRec(next1)
-        (value::result, next2)
+        (value :: result, next2)
       case Failure =>
         (Nil, input)
     }
@@ -48,7 +80,7 @@ abstract class Combinator {
   val floatingPointNumber: Parser[String] = input => {
     val r = """^(-?\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
     val matchIterator = r.findAllIn(input).matchData
-    if(matchIterator.hasNext) {
+    if (matchIterator.hasNext) {
       val next = matchIterator.next()
       val all = next.group(0)
       val target = next.group(1)
@@ -58,10 +90,10 @@ abstract class Combinator {
     }
   }
 
-  val stringLiteral: Parser[String] = input =>  {
-    val r = ("^\"("+"""([^"\p{Cntrl}\\]|\\[\\'"bfnrt]|\\u[a-fA-F0-9]{4})*+"""+")\"").r
+  val stringLiteral: Parser[String] = input => {
+    val r = ("^\"(" +"""([^"\p{Cntrl}\\]|\\[\\'"bfnrt]|\\u[a-fA-F0-9]{4})*+""" + ")\"").r
     val matchIterator = r.findAllIn(input).matchData
-    if(matchIterator.hasNext) {
+    if (matchIterator.hasNext) {
       val next = matchIterator.next()
       val all = next.group(0)
       val target = next.group(1)
@@ -88,11 +120,12 @@ abstract class Combinator {
 
     /**
       * combine
+      *
       * @param right 逐次合成を行うパーサー
       * @tparam U パーサーの結果の型
       * @return
       */
-    def ~[U](right: => Parser[U]) : Parser[(T, U)] = input => {
+    def ~[U](right: => Parser[U]): Parser[(T, U)] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
@@ -108,10 +141,11 @@ abstract class Combinator {
 
     /**
       * use left
+      *
       * @param right 右側のパーサー
       * @return
       */
-    def <~(right: => Parser[Any]) : Parser[T] = input => {
+    def <~(right: => Parser[Any]): Parser[T] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
@@ -127,11 +161,12 @@ abstract class Combinator {
 
     /**
       * use right
+      *
       * @param right 右側のパーサー
       * @tparam U パーサーの結果の型
       * @return
       */
-    def ~>[U](right: => Parser[U]) : Parser[U] = input => {
+    def ~>[U](right: => Parser[U]): Parser[U] = input => {
       parser(input) match {
         case Success(value1, next1) =>
           right(next1) match {
@@ -147,6 +182,7 @@ abstract class Combinator {
 
     /**
       * map
+      *
       * @param function 適用する関数
       * @tparam U パーサーの結果の型
       * @return
